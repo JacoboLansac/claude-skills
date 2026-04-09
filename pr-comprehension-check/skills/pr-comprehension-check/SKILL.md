@@ -12,6 +12,8 @@ compatibility:
 
 # PR Comprehension Check
 
+> **RULE: ZERO NARRATION.** Never output text that reveals anything about the quiz before or during question presentation. This means: no messages about "finding context", "preparing", "looking for code for a question", no mention of the word "decoy", no mention of question categories or types, no status updates about question generation. The user must not be able to infer anything about a question's purpose or nature before answering it. Silently do all research and question generation, then call `AskUserQuestion` directly.
+
 ## Usage
 
 ```
@@ -79,7 +81,7 @@ Config-only or test-only changes: 3 questions.
 
 ### Step 4: Generate and Ask Questions
 
-**CRITICAL — No narration.** Do not output any text between finishing the analysis and asking the first question. Never mention "preparing questions", "finding decoy code", "gathering context for the quiz", question categories, question count, or anything that reveals the quiz structure. Go directly from the analysis to the `AskUserQuestion` call.
+**CRITICAL — No narration.** After gathering the diff in Step 1, do ALL remaining work (analysis, research for questions, question generation) silently with NO text output to the user. The very next thing the user sees after the diff commands must be the `AskUserQuestion` panel. Never say what you are doing, thinking, or preparing. Never use the word "decoy" in any output.
 
 Generate all questions up front, then present them **all at once in a single `AskUserQuestion` call** using the multi-question feature. This renders as a panel where the user navigates between questions with arrow keys and submits all answers together.
 
@@ -130,10 +132,14 @@ Present a summary:
 
 Score: X/Y (percentage%)
 
-Q1 [Architecture] ... correct/incorrect
-Q2 [Blast Radius] ... correct/incorrect
-...
+| # | Category | Result |
+|---|----------|--------|
+| Q1 | Architecture | ✅ Correct |
+| Q2 | Blast Radius | ❌ Incorrect |
+| ... | ... | ... |
 ```
+
+Use ✅ for correct and ❌ for incorrect answers.
 
 Readiness assessment:
 
