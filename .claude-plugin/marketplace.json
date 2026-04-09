@@ -1,12 +1,17 @@
 {
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
   "name": "jacobo-claude-skills",
   "description": "A collection of Claude Code skills for developer workflows",
+  "owner": {
+    "name": "Jacobo Lansac",
+    "email": "anotherprotoaccount@proton.me"
+  },
   "plugins": [
     {
       "name": "pr-comprehension-check",
-      "path": "pr-comprehension-check",
       "description": "Interactive multiple-choice quiz that tests whether you understand your AI-assisted code changes before creating a PR",
-      "version": "1.0.0"
+      "version": "1.0.0",
+      "source": "./pr-comprehension-check"
     }
   ]
 }
