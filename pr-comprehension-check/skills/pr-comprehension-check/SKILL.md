@@ -26,6 +26,18 @@ This skill runs an interactive multiple-choice quiz — one question at a time �
 genuinely understands what changed, why, and what could go wrong. The developer picks answers from options
 instead of typing, making it fast to complete while still being a meaningful gate.
 
+## Usage
+
+```
+/pr-comprehension-check              # Quiz on current branch vs main
+/pr-comprehension-check 42           # Quiz on PR #42
+/pr-comprehension-check <pr-url>     # Quiz on a specific PR URL
+```
+
+- **No arguments**: diffs the current branch against the base branch (`main`, `master`, or `dev`)
+- **PR number**: fetches the diff and metadata from that PR via `gh pr view` / `gh pr diff`
+- **PR URL**: same as PR number, but accepts a full GitHub PR URL (e.g. `https://github.com/owner/repo/pull/42`)
+
 ## When to Run
 
 - At the end of a Claude Code programming session, before `gh pr create` or equivalent
@@ -36,11 +48,32 @@ instead of typing, making it fast to complete while still being a meaningful gat
 
 ### Step 1: Gather Context
 
-Collect the diff and any available PR/issue context. Use multiple sources to build the fullest picture.
+Collect the diff and any available PR/issue context. The method depends on how the skill was invoked.
 
-**Get the diff** — try these in order:
+#### Mode A: PR number or URL provided
+
+If the user passed a PR number or URL, use `gh` to fetch everything:
 
 ```bash
+# Get PR metadata (title, body, base branch, linked issues)
+gh pr view <number-or-url> --json title,body,baseRefName,headRefName,files,additions,deletions
+
+# Get the full diff
+gh pr diff <number-or-url>
+
+# Get the diff summary
+gh pr diff <number-or-url> --stat 2>/dev/null || gh pr view <number-or-url> --json files
+
+# Get commit history
+gh pr view <number-or-url> --json commits --jq '.commits[].messageHeadline'
+```
+
+#### Mode B: No arguments (current branch)
+
+Diff the current branch against the base branch:
+
+```bash
+# Get the diff — try these in order:
 # Option A: Diff of current branch against the main branch (main, master, or dev)
 git diff main...HEAD
 
@@ -54,13 +87,11 @@ git diff --cached
 git diff
 ```
 
-**Get the diff summary** (always run this for sizing):
 ```bash
+# Get the diff summary (always run this for sizing)
 git diff main...HEAD --stat
-```
 
-**Get commit history on this branch:**
-```bash
+# Get commit history on this branch
 git log main..HEAD --oneline
 ```
 
