@@ -1,0 +1,5 @@
+{
+  "name": "pr-comprehension-check",
+  "description": "Interactive multiple-choice quiz that tests whether you understand your AI-assisted code changes before creating a PR. Covers architecture decisions, blast radius, risk, and includes decoy questions to catch rubber-stamping.",
+  "version": "1.0.0"
+}
