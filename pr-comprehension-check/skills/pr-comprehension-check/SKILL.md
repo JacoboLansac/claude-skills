@@ -1,13 +1,6 @@
 ---
 name: pr-comprehension-check
-description: >
-  Generates an interactive multiple-choice comprehension quiz for the human developer after AI-assisted
-  code changes, ensuring they understand the architecture, tradeoffs, blast radius, and deployment impact
-  before creating a PR. Use this skill whenever the user says things like "create the PR", "I'm done coding",
-  "ready to submit", "quiz me on the changes", "comprehension check", "do I understand this diff",
-  "review my changes before PR", or any indication they're wrapping up a coding session and want to
-  verify their understanding. Also trigger when a workflow or hook calls for a pre-PR comprehension gate.
-  This skill should run BEFORE the PR is actually created — it is a gate, not a post-hoc review.
+description: Interactive multiple-choice quiz on a diff or PR to verify the developer understands the changes before merging.
 compatibility:
   tools:
     - AskUserQuestion
