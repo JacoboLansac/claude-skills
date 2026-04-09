@@ -71,13 +71,25 @@ Before generating questions, build a mental model:
 |---|---|---|
 | Small | <100 lines, 1-2 files | 3 |
 | Medium | 100-500 lines, or 3-8 files | 4 |
-| Large | 500+ lines, or 9+ files, or architectural changes | 5 |
+| Large | 500+ lines, or 9+ files, or architectural changes | 4 |
 
 Config-only or test-only changes: 3 questions.
 
+**Maximum 4 questions** — this is a hard limit imposed by `AskUserQuestion`.
+
 ### Step 4: Generate and Ask Questions
 
-Generate all questions up front, then present them **one at a time** using `AskUserQuestion`. Each question has 3-4 options — one correct, the rest plausible but wrong. Randomize the position of the correct answer.
+**CRITICAL — No narration.** Do not output any text between finishing the analysis and asking the first question. Never mention "preparing questions", "finding decoy code", "gathering context for the quiz", question categories, question count, or anything that reveals the quiz structure. Go directly from the analysis to the `AskUserQuestion` call.
+
+Generate all questions up front, then present them **all at once in a single `AskUserQuestion` call** using the multi-question feature. This renders as a panel where the user navigates between questions with arrow keys and submits all answers together.
+
+Each question in the `questions` array should have:
+- `question`: The full question text, prefixed with difficulty (e.g. "[Basic] What is..."). For decoy questions, include the code snippet directly in the question text.
+- `header`: Short label like "Q1", "Q2", "Q3", "Q4"
+- `options`: 2-4 choices with `label` (the answer text) and `description` (empty string is fine). One correct, the rest plausible but wrong. Randomize the position of the correct answer.
+- `multiSelect`: false
+
+Do NOT output any text before the `AskUserQuestion` call. The questions themselves are the first thing the user should see after the diff analysis.
 
 #### Question Categories
 
@@ -93,7 +105,7 @@ Pick from these based on relevance to the diff. Each question should reference s
 
 Include one trick question that presents a real code snippet from the repo that was **NOT changed** in the PR, framed as if it were part of the change. The correct answer is always a variant of "This code was not modified in this PR."
 
-Pick code that is thematically related but untouched — same directory or similar domain. Use the `preview` field on `AskUserQuestion` options to show the snippet. Include 2-3 plausible reasons the code *could* have changed alongside the correct "not modified" option. The decoy catches developers who are guessing without having read the diff.
+Pick code that is thematically related but untouched — same directory or similar domain. Include the code snippet directly in the `question` text. Include 2-3 plausible reasons the code *could* have changed alongside the correct "not modified" option. The decoy catches developers who are guessing without having read the diff.
 
 The decoy counts toward the total question count. Place it at a random position — not always last.
 
@@ -107,7 +119,7 @@ To prevent the "not modified" option from being an obvious tell, include it as a
 
 Prefix each question with number and difficulty: "Q1/4 [Basic] — ..."
 
-After each answer, briefly say if they got it right or wrong (one-line explanation for wrong answers), then immediately ask the next question. Keep momentum.
+After receiving all answers, evaluate them together and present results in Step 5.
 
 ### Step 5: Score and Assess
 
@@ -131,17 +143,44 @@ Readiness assessment:
 
 ## Example
 
-**Q1/3 [Basic] — Architecture:** "This PR switches session handling from JWT in localStorage to httpOnly cookies. What is the primary security benefit?"
-- A) Prevents XSS attacks from accessing tokens
-- B) Reduces server memory usage
-- C) Enables faster token validation
+Claude calls `AskUserQuestion` with 3 questions in a single call:
 
-Developer picks A. "Correct!"
+```json
+{
+  "questions": [
+    {
+      "question": "[Basic] This PR switches session handling from JWT in localStorage to httpOnly cookies. What is the primary security benefit?",
+      "header": "Q1",
+      "options": [
+        { "label": "Prevents XSS attacks from accessing tokens", "description": "" },
+        { "label": "Reduces server memory usage", "description": "" },
+        { "label": "Enables faster token validation", "description": "" }
+      ],
+      "multiSelect": false
+    },
+    {
+      "question": "[Intermediate] The function refresh_token() in auth/tokens.py was also updated in this PR. What was the purpose of the change?",
+      "header": "Q2",
+      "options": [
+        { "label": "Added retry logic for expired refresh tokens", "description": "" },
+        { "label": "This code was not modified in this PR", "description": "" },
+        { "label": "Switched from symmetric to asymmetric signing", "description": "" }
+      ],
+      "multiSelect": false
+    },
+    {
+      "question": "[Advanced] If the cookie-based session is deployed before the frontend removes the localStorage token read, what happens?",
+      "header": "Q3",
+      "options": [
+        { "label": "Users get logged out on every page load", "description": "" },
+        { "label": "Both tokens are sent, but the cookie takes precedence", "description": "" },
+        { "label": "The old localStorage token is used, bypassing httpOnly protection", "description": "" },
+        { "label": "This code was not modified in this PR", "description": "" }
+      ],
+      "multiSelect": false
+    }
+  ]
+}
+```
 
-**Q2/3 [Intermediate] — Decoy:** "The following function was also updated in this PR. What was the purpose of the change?"
-*(Shows preview of `refresh_token()` from `auth/tokens.py` — NOT modified in the PR)*
-- A) Added retry logic for expired refresh tokens
-- B) This code was not modified in this PR
-- C) Switched from symmetric to asymmetric signing
-
-Developer picks B. "Correct! This function wasn't touched — good eye."
+The user navigates between Q1/Q2/Q3 with arrow keys, selects answers, and submits all at once. Claude then presents results in Step 5.
