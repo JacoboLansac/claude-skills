@@ -86,7 +86,7 @@ Config-only or test-only changes: 3 questions.
 Generate all questions up front, then present them **all at once in a single `AskUserQuestion` call** using the multi-question feature. This renders as a panel where the user navigates between questions with arrow keys and submits all answers together.
 
 Each question in the `questions` array should have:
-- `question`: The full question text, prefixed with difficulty (e.g. "[Basic] What is..."). For decoy questions, include the code snippet directly in the question text.
+- `question`: The question text. Do NOT include difficulty labels, category tags, or any metadata — just the question itself. For decoy questions, include the code snippet directly in the question text.
 - `header`: Short label like "Q1", "Q2", "Q3", "Q4"
 - `options`: 2-4 choices with `label` (the answer text) and `description` (empty string is fine). One correct, the rest plausible but wrong. Randomize the position of the correct answer.
 - `multiSelect`: false
@@ -95,31 +95,22 @@ Do NOT output any text before the `AskUserQuestion` call. The questions themselv
 
 #### Question Categories
 
-Pick from these based on relevance to the diff. Each question should reference specific file names, function names, or module names from the changes — not generic concepts.
+Pick from these based on relevance to the diff. Each question should reference specific file names, function names, or module names from the changes — not generic concepts. The distribution is entirely random — any mix of categories is valid.
 
-- **Intent & Architecture** (at least 1): Why this approach over alternatives. What pattern was introduced and why.
-- **Blast Radius** (at least 1): What breaks if something goes wrong — which modules, endpoints, flows are affected.
-- **Deployment & Infrastructure** (if relevant): Migration concerns, config changes, deployment order.
-- **Risk & Edge Cases** (at least 1): Race conditions, backwards compatibility, failure modes, rollback plan.
-- **Verification** (if room): What test or check would catch a regression.
+- **Intent & Architecture**: Why this approach over alternatives. What pattern was introduced and why.
+- **Blast Radius**: What breaks if something goes wrong — which modules, endpoints, flows are affected.
+- **Deployment & Infrastructure**: Migration concerns, config changes, deployment order.
+- **Risk & Edge Cases**: Race conditions, backwards compatibility, failure modes, rollback plan.
+- **Verification**: What test or check would catch a regression.
+- **Decoy**: Presents a real code snippet from the repo that was **NOT changed** in the PR, framed as if it were part of the change. The correct answer is always a variant of "This code was not modified in this PR."
 
-#### Decoy Question (exactly 1 per quiz)
+There are no minimum or maximum constraints per category. Any question can be a decoy — you may have 0, 1, 2, 3, or even all questions be decoys. The user must not be able to predict the distribution.
 
-Include one trick question that presents a real code snippet from the repo that was **NOT changed** in the PR, framed as if it were part of the change. The correct answer is always a variant of "This code was not modified in this PR."
+#### Decoy Questions
 
-Pick code that is thematically related but untouched — same directory or similar domain. Include the code snippet directly in the `question` text. Include 2-3 plausible reasons the code *could* have changed alongside the correct "not modified" option. The decoy catches developers who are guessing without having read the diff.
+Pick code that is thematically related but untouched — same directory or similar domain. Include the code snippet directly in the `question` text. Include 2-3 plausible reasons the code *could* have changed alongside the correct "not modified" option. Decoys catch developers who are guessing without having read the diff.
 
-The decoy counts toward the total question count. Place it at a random position — not always last.
-
-To prevent the "not modified" option from being an obvious tell, include it as a wrong answer in 1-2 of the non-decoy questions too. For those questions, the code *was* changed, so "not modified" is incorrect.
-
-#### Difficulty Mix
-
-- 1 Basic (skimming the diff is enough)
-- 1-2 Intermediate (requires understanding the architecture)
-- 1-2 Advanced (requires understanding tradeoffs and failure modes)
-
-Prefix each question with number and difficulty: "Q1/4 [Basic] — ..."
+To prevent the "not modified" option from being an obvious tell, include it as a wrong answer in some non-decoy questions too. For those questions, the code *was* changed, so "not modified" is incorrect.
 
 After receiving all answers, evaluate them together and present results in Step 5.
 
@@ -143,9 +134,9 @@ Use ✅ for correct and ❌ for incorrect answers.
 
 Readiness assessment:
 
-- **Ready to ship** (all correct, or 1 wrong on Basic): Proceed with PR creation.
-- **Review recommended** (1-2 wrong on Intermediate/Advanced): Explain missed concepts, offer to proceed or re-quiz on missed areas.
-- **Not ready** (3+ wrong, or wrong on both Blast Radius and Risk): Walk through the changes at an architectural level. Offer a re-quiz with new options on missed questions.
+- **Ready to ship** (all correct or 1 wrong): Proceed with PR creation.
+- **Review recommended** (2 wrong): Explain missed concepts, offer to proceed or re-quiz on missed areas.
+- **Not ready** (3+ wrong): Walk through the changes at an architectural level. Offer a re-quiz with new options on missed questions.
 
 ## Example
 
@@ -155,7 +146,7 @@ Claude calls `AskUserQuestion` with 3 questions in a single call:
 {
   "questions": [
     {
-      "question": "[Basic] This PR switches session handling from JWT in localStorage to httpOnly cookies. What is the primary security benefit?",
+      "question": "This PR switches session handling from JWT in localStorage to httpOnly cookies. What is the primary security benefit?",
       "header": "Q1",
       "options": [
         { "label": "Prevents XSS attacks from accessing tokens", "description": "" },
@@ -165,7 +156,7 @@ Claude calls `AskUserQuestion` with 3 questions in a single call:
       "multiSelect": false
     },
     {
-      "question": "[Intermediate] The function refresh_token() in auth/tokens.py was also updated in this PR. What was the purpose of the change?",
+      "question": "The function refresh_token() in auth/tokens.py was also updated in this PR. What was the purpose of the change?",
       "header": "Q2",
       "options": [
         { "label": "Added retry logic for expired refresh tokens", "description": "" },
@@ -175,7 +166,7 @@ Claude calls `AskUserQuestion` with 3 questions in a single call:
       "multiSelect": false
     },
     {
-      "question": "[Advanced] If the cookie-based session is deployed before the frontend removes the localStorage token read, what happens?",
+      "question": "If the cookie-based session is deployed before the frontend removes the localStorage token read, what happens?",
       "header": "Q3",
       "options": [
         { "label": "Users get logged out on every page load", "description": "" },
