@@ -97,6 +97,8 @@ Pick code that is thematically related but untouched — same directory or simil
 
 The decoy counts toward the total question count. Place it at a random position — not always last.
 
+To prevent the "not modified" option from being an obvious tell, include it as a wrong answer in 1-2 of the non-decoy questions too. For those questions, the code *was* changed, so "not modified" is incorrect.
+
 #### Difficulty Mix
 
 - 1 Basic (skimming the diff is enough)
