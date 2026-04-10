@@ -14,6 +14,11 @@ compatibility:
 
 > **RULE: ZERO NARRATION.** Never output text that reveals anything about the quiz before or during question presentation. This means: no messages about "finding context", "preparing", "looking for code for a question", no mention of the word "decoy", no mention of question categories or types, no status updates about question generation. The user must not be able to infer anything about a question's purpose or nature before answering it. Silently do all research and question generation, then call `AskUserQuestion` directly.
 
+## Requirements
+
+- `gh` CLI installed and authenticated against the target repository (required when quizzing on a PR number or URL — Mode A in Step 1).
+- `git` available in the working directory (required for Mode B).
+
 ## Usage
 
 ```
